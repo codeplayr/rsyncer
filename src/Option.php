@@ -1,6 +1,8 @@
 <?php
 namespace Codeplayr\Rsyncer;
 
+use \Codeplayr\Rsyncer\Helper;
+
 class Option{
 	
 	const ARCHIVE			= 'archive';	//equals -rlptgoD (no -H,-A,-X)
@@ -22,8 +24,9 @@ class Option{
 	const EXCLUDE_FROM		= 'exclude_from';
 	const LOG_FILE			= 'log_file';
 	
-	private $_options = [];
-	private $_args = [];
+	private $_flags = [];
+	private $_extras = [];
+	private $_helper = null;
 	
 	private $_options_map = [
 		self::ARCHIVE			=> 'a',
@@ -48,12 +51,14 @@ class Option{
 	
 	public function __construct( $options = [] ){
 		
+		$this->_helper = new Helper();
+		
 		if( ! is_array( $options ) ) return;
 		
 		foreach( $options as $key => $val ){
 			$flag = $this->_options_map[ $key ];
 			if( $flag && $val === true ){
-				$this->addOption( $flag );
+				$this->addFlag( $flag );
 			}
 		}
 		
@@ -68,59 +73,60 @@ class Option{
 		if( key_exists( self::LOG_FILE, $options ) ){
 			$this->addArgument( $this->_options_map[ self::LOG_FILE ], $options[ self::LOG_FILE ] );
 		}  
+		
 	}
 	
 	public function assemble(){
 		$flags = $this->_assembleFlags();
-		$args = $this->_assembleArgs();
-
-		return $flags . ' ' . $args;
+		$opts = implode(' ', $this->_extras);
+		
+		return trim( $flags . ' ' . $opts );
 	}
 	
-	public function addOption( $flag ){
-		if( ! is_string( $flag ) ) return $this;
-		
-		if( strlen( $flag ) > 2 ){
-			$left = substr($flag, 0, 2);
-			$right = substr($flag, 2);
-			$left = str_replace('-', '' , $left);	
-			$flag = $left . $right;
+	public function addFlag( $flag ){
+		if( ! is_string( $flag ) ){
+			throw new \InvalidArgumentException('No String Value');
 		}
 		
-		if( $flag == 'a' ) $this->_options = array_merge( $this->_options, ['r', 'l', 'p', 't', 'g', 'o', 'D' ] );
-		else $this->_options[] = $flag;
+		$flag = $this->_helper->removeDash( $flag );
+		
+		if( $flag == 'a' ) $this->_flags = array_merge( $this->_flags, ['r', 'l', 'p', 't', 'g', 'o', 'D' ] );
+		else $this->_flags[] = $flag;
 		
 		return $this;
 	}
 	
-	public function removeOption( $flag ){
-		if( ! is_string( $flag ) ) return $this ;
-		$idx = array_search( $flag, $this->_options );
+	public function removeFlag( $flag ){
+		if( ! is_string( $flag ) ){
+			throw new \InvalidArgumentException('No String Value');
+		}
+		
+		$flag = $this->_helper->removeDash( $flag );
+		
+		$idx = array_search( $flag, $this->_flags );
 		if( $idx >= 0 ){
-			unset( $this->_options[ $idx ] );
+			unset( $this->_flags[ $idx ] );
 		}  
 		
 		return $this;
 	}
 	
-	public function addArgument( $flag, $value ){
-		if( !is_string( $flag ) ) return;
+	public function addArgument( $name, $value, $useEqualDelimiter = true ){
+		if( ! is_string( $name ) ){
+			throw new \InvalidArgumentException('No String Value');
+		}
+				
+		$name = $this->_helper->removeDash( $name );
+		$name = $this->_helper->addDash( $name );
 		
-		$this->_args[ $flag ] = $value;
+		$this->_extras[] =  ( ! $useEqualDelimiter )? $name . ' ' . escapeshellarg( $value )
+													: $name . '=' . escapeshellarg( $value );
 		
 		return $this;
 	}
 	
-	private function _assembleArgs(){
-		$s = [];
-		foreach( $this->_args as $k=>$v ){
-			$s[] = '--' . $k . '=' . escapeshellarg($v);
-		}
-		return implode(' ', $s);
-	}
-	
 	private function _assembleFlags(){
-		$unique_opts = array_unique( $this->_options );
+		$unique_opts = array_unique( $this->_flags );
 		
 		$flags_single = [];
 		$flags_multi = [];
@@ -136,4 +142,5 @@ class Option{
 		
 		return implode(' ', $s);
 	}	
+	
 }

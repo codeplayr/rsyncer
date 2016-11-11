@@ -15,6 +15,7 @@ class Rsync{
 	private $_option = null;
 	private $_ssh = null;
 	private $_conf = null;
+	private $_helper = null;
 	
 	public function __construct( Option $options = null, SSH $ssh = null, $conf = [], $message = null ){
 		

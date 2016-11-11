@@ -1,6 +1,8 @@
 <?php
 namespace Codeplayr\Rsyncer;
 
+use \Codeplayr\Rsyncer\Helper;
+
 class SSH{
 	
 	const EXECUTABLE	= 'executable';
@@ -11,8 +13,12 @@ class SSH{
 	const REMOTE_SOURCE = 'remote_source';
 	
 	private $_options = [];
+	private $_flags = [];
+	private $_helper = null;
 	
 	public function __construct( $options = [] ){
+		
+		$this->_helper = new Helper();
 		
 		$defaults = [
 			self::EXECUTABLE	=> 'ssh',
@@ -36,6 +42,11 @@ class SSH{
 	
 	public function isRemoteSource(){
 		return (bool) $this->_options[ self::REMOTE_SOURCE ];
+	}
+	
+	public function addFlag( $name, $value = null ){
+		$name = $this->_helper->removeDash( $name );
+		$this->_flags[ $name ] = $value;
 	}
 	
 	private function _assembleCommand(){
@@ -63,16 +74,16 @@ class SSH{
 		}
 		
 		if( is_string( $this->_options[ self::IDENTITY_FILE ] ) ){
-			if( ! is_readable( $this->_options[ self::IDENTITY_FILE ] ) ){
-				return null;
-			}
-			
 			$cmd[] = "-i {$this->_options[ self::IDENTITY_FILE ]}";	
 		}
 		
-		$cmd[] = '"';
+		foreach( $this->_flags as $name => $value ){
+			$name = $this->_helper->addDash( $name );
+			
+			$cmd[] = ( is_null( $value ) ) ? $name : $name . ' ' . $value;
+		}
 		
-		return implode(' ',  $cmd );
+		return implode(' ',  $cmd ) . '"';
 	}
 	
 }
