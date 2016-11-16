@@ -3,6 +3,7 @@
 use \Codeplayr\Rsyncer\Option;
 use \Codeplayr\Rsyncer\SSH;
 use \Codeplayr\Rsyncer\Rsync;
+use \Codeplayr\Rsyncer\Helper;
 
 class RsyncTest extends PHPUnit_Framework_TestCase{
 
@@ -72,5 +73,35 @@ class RsyncTest extends PHPUnit_Framework_TestCase{
 		
 		$this->assertTrue( $rsync->sync( $source, $destination ) );
 	}	
+	
+	public function test_flags_with_dash(){
+		$helper = new Helper();
+		$this->assertEquals('a', $helper->removeDash('-a'));
+		$this->assertEquals('archive', $helper->removeDash('--archive'));
+		$this->assertEquals('archive', $helper->removeDash('archive'));
+		$this->assertEquals('-a', $helper->addDash('a'));
+		$this->assertEquals('--archive', $helper->addDash('archive'));
+		$this->assertEquals('--archive', $helper->addDash('--archive'));
+	}
+		
+	/**
+	 * @dataProvider invalid_flags_dataprovider
+	 */
+	public function test_invalid_flag_returns_exception( $flag ){
+		$this->setExpectedException('InvalidArgumentException');
+		
+		$helper = new Helper();
+		$helper->removeDash( $flag );
+		$helper->addDash( $flag );
+	}
+	
+	public function invalid_flags_dataprovider() {
+		return [
+			[0], 
+			[''], 
+			['-'], 
+			['--']
+		];
+	}
 	
 }
