@@ -8,6 +8,7 @@
 PHP 5.4+, rsync, composer
 
 ##### Installation
+------------------
 - Use [Composer](https://getcomposer.org/doc/01-basic-usage.md) to install the package
 
 - From project root directory execute
@@ -16,7 +17,7 @@ PHP 5.4+, rsync, composer
 
 	or
 
-	```composer require codeplayr/rsyncer dev-master```
+	```composer require codeplayr/rsyncer```
 
 - [Composer](https://getcomposer.org/doc/01-basic-usage.md) will take care of autoloading. Just include the autoloader at the top of the file
 
@@ -64,7 +65,7 @@ $option->addFlag('human-readable')
 //optional ssh connection to remote host
 $ssh = new SSH([
 	SSH::USERNAME		=> 'root',
-	SSH::HOST			=> '192.168.1.101',
+	SSH::HOST			=> '1.2.3.4',
 	SSH::PORT			=> 22,
 	SSH::IDENTITY_FILE	=> '/path/to/private/key',
 ]);
@@ -108,8 +109,9 @@ rsync
 ----------
 
 - All tests are inside `tests` folder.
-- Execute `composer install phpunit/phpunit` to install phpunit
+- Execute `composer install --dev phpunit/phpunit` to install phpunit
 - Run `phpunit` from inside the tests directory to execute testcase
+- Set `--coverage-text` option to show code coverage report in terminal
 
 ##### Notes:
 ----------
